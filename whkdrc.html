@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WHKDRC Config Formatter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Tailwind gray-50 */
+        }
+        kbd {
+            /* Screen styles for KBD are applied via Tailwind in the JS rendering */
+        }
+        .print-container {
+            /* Styles for the content that will be printed are in @media print */
+        }
+
+        @media print {
+            html, body {
+                font-size: 10pt;
+                background-color: #fff !important;
+                color: #000 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                overflow: visible !important; /* Crucial for full content printing */
+                height: auto !important;      /* Crucial for full content printing */
+                width: auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+            
+            /* Target the main page container specifically */
+            .container.mx-auto { 
+                max-width: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                border: none !important;
+                overflow: visible !important; /* Allow content to flow */
+            }
+
+            .print-container { /* This is #outputContainer */
+                margin: 0 !important;
+                padding: 10px !important; /* Add a little padding for the overall print area */
+                border: none !important;
+                box-shadow: none !important;
+                overflow: visible !important; /* Crucial */
+                height: auto !important;      /* Crucial */
+                width: 100% !important;
+                display: block !important;
+                background-color: #fff !important; 
+            }
+
+            .config-section {
+                margin-bottom: 15px !important; 
+                page-break-inside: avoid; 
+            }
+
+            .config-section h2 {
+                font-size: 14pt !important; 
+                color: #000 !important;
+                border-color: #999 !important;
+                margin-top: 15px !important; 
+                margin-bottom: 10px !important; 
+                padding-bottom: 3px !important; 
+                page-break-before: auto;
+                page-break-after: avoid; 
+            }
+
+            .config-section .overflow-x-auto { /* This is the table container */
+                overflow-x: visible !important;
+                box-shadow: none !important; 
+                border: 1px solid #ccc !important; 
+                margin-bottom: 10px; 
+            }
+
+            table {
+                width: 100% !important;
+                font-size: 9pt !important;
+                border-collapse: collapse !important; 
+                border: 1px solid #ccc !important; 
+                page-break-inside: auto;
+            }
+
+            th, td {
+                color: #000 !important;
+                border: 1px solid #ddd !important; 
+                padding: 3px 5px !important; 
+                text-align: left !important; 
+            }
+
+            thead {
+                background-color: #f0f0f0 !important; 
+                display: table-header-group !important; /* Repeat headers on new pages */
+            }
+            
+            tbody {
+                 background-color: #fff !important;
+            }
+
+            tr {
+                page-break-inside: avoid !important;
+                page-break-after: auto !important;
+            }
+
+            kbd {
+                border: 1px solid #999 !important; 
+                padding: 1px 3px !important; 
+                font-size: 8pt !important; 
+                box-shadow: none !important;
+                background-color: #e8e8e8 !important; 
+                color: #000 !important;
+                display: inline-block;
+                vertical-align: baseline;
+                line-height: 1.2; 
+            }
+
+            .whitespace-pre-wrap {
+                white-space: pre-wrap !important;
+                word-break: break-all !important;
+            }
+            
+            .text-gray-600, .text-gray-800, .text-blue-700, .text-blue-600, .text-red-600 {
+                color: #000 !important;
+            }
+            .bg-blue-50 { /* Shell config block */
+                background-color: #eef2ff !important; 
+                border: 1px solid #c7d2fe !important; 
+                padding: 8px !important; 
+            }
+             .bg-blue-50 strong, .bg-blue-50 code {
+                color: #000 !important; 
+            }
+
+            .bg-red-50 { /* For unparsed lines */
+                background-color: #ffe4e6 !important; 
+                border: 1px solid #ffc2c7 !important;
+                padding: 6px 8px !important;
+                color: #000 !important;
+            }
+            .bg-red-50 strong {
+                color: #000 !important;
+            }
+            
+            .text-gray-600.mb-2.ml-1.text-sm em { /* Comment lines */
+                 color: #333 !important; /* Darker gray for comments */
+            }
+
+
+            .shadow-md, .shadow-sm, .shadow-xl, .shadow-lg, .shadow {
+                box-shadow: none !important;
+            }
+            .border-gray-200, .border-gray-300, .border-blue-200, .border-red-200 {
+                border-color: #ccc !important;
+            }
+            a {
+                color: #0000ee !important;
+                text-decoration: underline !important;
+            }
+
+            /* Remove initial placeholder message from print */
+            #outputContainer > p.text-gray-500.text-center.py-10 {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased text-gray-800">
+    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+        <header class="mb-8 text-center no-print">
+            <h1 class="text-4xl font-bold text-gray-700">WHKDRC Config Formatter</h1>
+            <p class="text-gray-500 mt-2">Paste your <code class="text-sm bg-gray-200 p-1 rounded">whkdrc</code> configuration below to see a printable version.</p>
+        </header>
+
+        <div class="bg-white p-6 rounded-xl shadow-xl no-print">
+            <div class="mb-4">
+                <label for="configInput" class="block text-sm font-medium text-gray-700 mb-1">Configuration Input:</label>
+                <textarea id="configInput" rows="15" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out font-mono text-sm" placeholder="Paste your whkdrc config here..."></textarea>
+            </div>
+            <div class="flex items-center justify-between">
+                <button id="convertButton" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-5 rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition duration-150 ease-in-out">
+                    Convert
+                </button>
+                <button id="printButton" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-5 rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition duration-150 ease-in-out hidden">
+                    Print Configuration
+                </button>
+            </div>
+        </div>
+
+        <div id="outputContainer" class="mt-10 print-container bg-white p-6 rounded-xl shadow-xl">
+            <p class="text-gray-500 text-center py-10">Formatted configuration will appear here after conversion.</p>
+        </div>
+        
+        <footer class="mt-12 text-center text-sm text-gray-400 no-print">
+            <p>WHKDRC Config Formatter | Powered by Tailwind CSS</p>
+        </footer>
+    </div>
+
+    <script>
+        // Sample configuration to pre-fill the textarea
+        const sampleConfig = `
+.shell powershell
+
+# Reload whkd configuration
+# alt + o                      : taskkill /f /im whkd.exe && start /b whkd # if shell is cmd
+alt + o                      : taskkill /f /im whkd.exe; Start-Process whkd -WindowStyle hidden # if shell is pwsh / powershell
+alt + shift + o              : komorebic reload-configuration
+
+# App shortcuts - these require shell to be pwsh / powershell
+# The apps will be focused if open, or launched if not open
+# alt + f                      : if ($wshell.AppActivate('Firefox') -eq $False) { start firefox }
+# alt + b                      : if ($wshell.AppActivate('Chrome') -eq $False) { start chrome }
+
+alt + q                      : komorebic close
+alt + m                      : komorebic minimize
+
+# Focus windows
+alt + h                      : komorebic focus left
+alt + j                      : komorebic focus down
+alt + k                      : komorebic focus up
+alt + l                      : komorebic focus right
+alt + shift + oem_4          : komorebic cycle-focus previous # oem_4 is [
+alt + shift + oem_6          : komorebic cycle-focus next # oem_6 is ]
+
+# Move windows
+alt + shift + h              : komorebic move left
+alt + shift + j              : komorebic move down
+alt + shift + k              : komorebic move up
+alt + shift + l              : komorebic move right
+alt + shift + return         : komorebic promote
+        `.trim(); // Shortened for brevity in example, full config still works
+
+        document.getElementById('configInput').value = sampleConfig;
+
+        // Utility to escape HTML special characters
+        function escapeHtml(unsafe) {
+            if (typeof unsafe !== 'string') return '';
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Parses the whkdrc configuration text
+        function parseWhkdConfig(configText) {
+            const lines = configText.split('\n'); // Corrected: use actual newline character
+            const result = []; 
+            let currentSectionObject = null; // Renamed for clarity
+
+            // Helper to get or create a section and add it to the result array
+            function getOrCreateSection(title) {
+                let section = result.find(item => item.type === 'section' && item.title === title);
+                if (!section) {
+                    section = { type: 'section', title: title, items: [] };
+                    result.push(section);
+                }
+                return section;
+            }
+
+            for (const rawLine of lines) {
+                const line = rawLine.trim();
+                if (line === '') continue; // Skip empty lines
+
+                if (line.startsWith('.shell')) {
+                    // Shell directive is a top-level item
+                    result.push({ type: 'shell', value: line.substring('.shell'.length).trim() });
+                } else if (line.startsWith('# ')) { // Section Header (e.g., "# Section Title")
+                    const title = line.substring(2).trim();
+                    currentSectionObject = getOrCreateSection(title); // Set this as the current section for subsequent items
+                } else if (line.startsWith('#')) { // Comment line (not a section header)
+                    const commentText = line.substring(1).trim();
+                    if (!currentSectionObject) { 
+                        // If no section header has been encountered yet, put comment in a default notes section
+                        currentSectionObject = getOrCreateSection("General Configuration Notes");
+                    }
+                    currentSectionObject.items.push({ type: 'comment', text: commentText });
+                } else { // Potential keybinding or other unparsed text
+                    const separatorIndex = line.indexOf(' : ');
+                    if (separatorIndex > 0) { // Likely a keybinding
+                        const keyPart = line.substring(0, separatorIndex).trim();
+                        let commandPart = line.substring(separatorIndex + 3).trim();
+                        let commandText = commandPart;
+                        let inlineComment = '';
+
+                        // Check for inline comments like "key : command # note"
+                        const commentHashIndex = commandPart.lastIndexOf(' # ');
+                        if (commentHashIndex > 0 && (commandPart.substring(commentHashIndex - 1, commentHashIndex) === ' ' || commentHashIndex === 0 )) {
+                            commandText = commandPart.substring(0, commentHashIndex).trim();
+                            inlineComment = commandPart.substring(commentHashIndex + 3).trim();
+                        }
+
+                        if (keyPart && !keyPart.startsWith('#')) { // Active keybinding
+                            if (!currentSectionObject) {
+                                // If no section header encountered, put binding in a default "Hotkeys" section
+                                currentSectionObject = getOrCreateSection("Hotkeys");
+                            }
+                            currentSectionObject.items.push({ 
+                                type: 'binding', 
+                                keys: keyPart.split(/\s*\+\s*/).map(k => k.trim()), 
+                                command: commandText, 
+                                comment: inlineComment 
+                            });
+                        } else { // Commented-out keybinding (e.g., "# alt + x : command") treated as a general comment
+                            if (!currentSectionObject) {
+                                currentSectionObject = getOrCreateSection("General Configuration Notes");
+                            }
+                            currentSectionObject.items.push({ type: 'comment', text: line }); // Store the full line as a comment
+                        }
+                    } else { // Line without ' : ', not a comment, not shell (e.g., malformed or just plain text)
+                        if (!currentSectionObject) {
+                            currentSectionObject = getOrCreateSection("Other Uncategorized Entries");
+                        }
+                        currentSectionObject.items.push({ type: 'text', content: line });
+                    }
+                }
+            }
+            // Filter out shell directives for the section list, and remove sections that ended up empty
+            return result.filter(item => item.type === 'shell' || (item.type === 'section' && item.items.length > 0));
+        }
+
+
+        // Renders the parsed configuration into the output container
+        function renderParsedConfig(parsedData, outputElement) {
+            outputElement.innerHTML = ''; // Clear previous output
+
+            if (parsedData.length === 0) {
+                outputElement.innerHTML = '<p class="text-gray-500 text-center py-10">No valid configuration found or input was empty.</p>';
+                document.getElementById('printButton').classList.add('hidden');
+                return;
+            }
+            
+            // Render shell directive first if it exists
+            const shellDirective = parsedData.find(item => item.type === 'shell');
+            if (shellDirective) {
+                const shellDiv = document.createElement('div');
+                shellDiv.className = 'mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg shadow';
+                shellDiv.innerHTML = `<strong class="text-blue-700 text-lg">Shell Configuration:</strong> <code class="text-blue-600 font-mono text-base">${escapeHtml(shellDirective.value)}</code>`;
+                outputElement.appendChild(shellDiv);
+            }
+
+            // Render sections
+            parsedData.filter(item => item.type === 'section').forEach(section => {
+                const sectionContainer = document.createElement('div');
+                sectionContainer.className = 'config-section mb-10'; // Screen style
+
+                const titleEl = document.createElement('h2');
+                // Screen styles for title
+                titleEl.className = 'text-2xl font-semibold mt-3 mb-4 pb-2 border-b border-gray-300 text-gray-700';
+                titleEl.textContent = section.title;
+                sectionContainer.appendChild(titleEl);
+
+                // Render comments within the section first
+                section.items.filter(i => i.type === 'comment').forEach(comment => {
+                    const p = document.createElement('p');
+                    p.className = 'text-gray-600 mb-2 ml-1 text-sm'; // Screen style
+                    p.innerHTML = `<em class="italic"># ${escapeHtml(comment.text)}</em>`;
+                    sectionContainer.appendChild(p);
+                });
+
+                const bindings = section.items.filter(i => i.type === 'binding');
+                if (bindings.length > 0) {
+                    const tableContainer = document.createElement('div');
+                    // Screen styles for table container
+                    tableContainer.className = 'overflow-x-auto shadow-lg rounded-lg border border-gray-200'; 
+                    const table = document.createElement('table');
+                    // Screen styles for table
+                    table.className = 'min-w-full divide-y divide-gray-200';
+                    table.innerHTML = `
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Keys</th>
+                                <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Command</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            ${bindings.map(b => `
+                                <tr>
+                                    <td class="px-5 py-4 whitespace-nowrap">
+                                        ${b.keys.map(k => `<kbd class="bg-gray-200 text-gray-900 px-2.5 py-1.5 rounded-md text-sm font-mono shadow border border-gray-300 inline-block">${escapeHtml(k)}</kbd>`).join(' <span class="mx-1 text-gray-500 font-semibold align-middle">+</span> ')}
+                                    </td>
+                                    <td class="px-5 py-4 whitespace-pre-wrap font-mono text-sm text-gray-800 break-all">${escapeHtml(b.command)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    `;
+                    tableContainer.appendChild(table);
+                    sectionContainer.appendChild(tableContainer);
+                }
+
+                // Render 'text' items (unparsed lines)
+                section.items.filter(i => i.type === 'text').forEach(textItem => {
+                    const p = document.createElement('p');
+                    // Screen styles for unparsed text
+                    p.className = 'text-red-600 mt-2 ml-1 text-sm font-mono bg-red-50 p-2 rounded border border-red-200';
+                    p.innerHTML = `<strong>Unparsed line:</strong> ${escapeHtml(textItem.content)}`;
+                    sectionContainer.appendChild(p);
+                });
+                
+                // Only append section if it has a title and some actual content items (besides just the title element)
+                if (sectionContainer.children.length > 1) { // children[0] is the title
+                     outputElement.appendChild(sectionContainer);
+                }
+            });
+            
+            // Show print button if there's content in outputElement
+            if (outputElement.children.length > 0 && !(outputElement.children.length === 1 && outputElement.firstElementChild.tagName === 'P' && outputElement.firstElementChild.textContent.includes("No valid configuration"))) {
+                document.getElementById('printButton').classList.remove('hidden');
+            } else {
+                 if (outputElement.children.length === 0) { // If it became empty due to filtering
+                    outputElement.innerHTML = '<p class="text-gray-500 text-center py-10">No content to display. Try a different configuration.</p>';
+                 }
+                 document.getElementById('printButton').classList.add('hidden');
+            }
+        }
+
+        // Event listener for the convert button
+        document.getElementById('convertButton').addEventListener('click', () => {
+            const configText = document.getElementById('configInput').value;
+            const parsedData = parseWhkdConfig(configText);
+            renderParsedConfig(parsedData, document.getElementById('outputContainer'));
+        });
+
+        // Event listener for the print button
+        document.getElementById('printButton').addEventListener('click', () => {
+            window.print();
+        });
+
+        // Automatically convert on page load if there's sample data (or for quick testing)
+        if (document.getElementById('configInput').value) {
+             document.getElementById('convertButton').click();
+        }
+
+    </script>
+</body>
+</html>
